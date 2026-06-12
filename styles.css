@@ -23,6 +23,10 @@ html {
   scroll-behavior: smooth;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -33,6 +37,10 @@ body {
     radial-gradient(circle at top left, rgba(255, 184, 28, 0.24), transparent 20%),
     radial-gradient(circle at bottom right, rgba(21, 71, 52, 0.12), transparent 28%),
     linear-gradient(180deg, #f4efe2 0%, var(--soft-background) 42%, #ece7da 100%);
+}
+
+body.modal-open {
+  overflow: hidden;
 }
 
 button,
@@ -328,6 +336,178 @@ label {
   color: var(--baylor-green);
 }
 
+.quick-reference-btn {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0.8rem 1rem;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--baylor-green), #1c5a43);
+  color: #fffdf7;
+  box-shadow: var(--shadow);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.quick-reference-btn:hover {
+  transform: translateY(-1px);
+}
+
+.reference-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  background: rgba(18, 28, 24, 0.48);
+  backdrop-filter: blur(3px);
+}
+
+.reference-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+}
+
+.reference-modal__inner {
+  width: min(100%, 980px);
+  max-height: min(86vh, 860px);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.2rem;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow: var(--shadow);
+}
+
+.reference-modal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+}
+
+.reference-modal__header h2 {
+  margin: 0;
+  line-height: 1.08;
+}
+
+.reference-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.reference-tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.7rem;
+  padding: 0.7rem 0.95rem;
+  border: 1px solid rgba(21, 71, 52, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-main);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reference-tab[aria-selected="true"] {
+  background: linear-gradient(135deg, rgba(21, 71, 52, 0.95), rgba(21, 71, 52, 0.86));
+  border-color: rgba(21, 71, 52, 0.35);
+  color: #fffdf7;
+}
+
+.reference-panel {
+  min-height: 0;
+  overflow: auto;
+  padding: 0.25rem 0.1rem 0.1rem;
+}
+
+.reference-panel__intro {
+  margin: 0 0 0.85rem;
+  color: var(--text-muted);
+}
+
+.reference-group-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.reference-group {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.reference-group__title,
+.reference-group__subtitle {
+  margin: 0;
+  color: var(--baylor-green);
+}
+
+.reference-group__title {
+  font-size: clamp(1.55rem, 2.8vw, 2.35rem);
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.reference-group__subtitle {
+  font-size: clamp(1.05rem, 2vw, 1.55rem);
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.reference-table-wrap {
+  overflow: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(21, 71, 52, 0.12);
+  background: #fffef8;
+}
+
+.reference-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 680px;
+}
+
+.reference-table th,
+.reference-table td {
+  padding: 0.9rem 0.85rem;
+  text-align: left;
+  vertical-align: top;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+}
+
+.reference-table thead th {
+  position: sticky;
+  top: 0;
+  background: #0a8f00;
+  color: #fffdf7;
+  z-index: 1;
+}
+
+.reference-table tbody th {
+  font-weight: 400;
+}
+
+.reference-table tbody tr:nth-child(odd) th,
+.reference-table tbody tr:nth-child(odd) td {
+  background: #c9d4c6;
+}
+
+.reference-table tbody tr:nth-child(even) th,
+.reference-table tbody tr:nth-child(even) td {
+  background: #dfe5db;
+}
+
 .completion-metric {
   display: inline-grid;
   gap: 0.2rem;
@@ -395,6 +575,12 @@ label {
     padding: 0 0.9rem 1.2rem;
   }
 
+  .quick-reference-btn {
+    right: 0.9rem;
+    bottom: 0.9rem;
+    padding: 0.8rem 0.9rem;
+  }
+
   .slide-grid {
     grid-template-columns: 1fr;
   }
@@ -404,6 +590,14 @@ label {
   }
 
   .slide-header {
+    display: grid;
+  }
+
+  .reference-modal {
+    padding: 0.8rem;
+  }
+
+  .reference-modal__header {
     display: grid;
   }
 }

@@ -157,8 +157,79 @@ const slideState = {
   caseAttempts: {}
 };
 
+const referenceSections = [
+  {
+    id: "lower-extremity",
+    label: "Lower Extremity",
+    type: "group",
+    groups: [
+      {
+        title: "Screening: Lower Quarter/Extremity",
+        subtitle: "Symptoms and Differentiation of Leg Pain",
+        columns: ["Source", "Vascular Claudication", "Neurogenic Claudication", "Peripheral Neuropathy", "Restless Leg Syndrome"],
+        rows: [
+          ["Description", "Bilateral, no burning", "Bilateral or unilateral, burning and dysesthesia in back, buttocks, LEs", "Pain, aching, numb in feet; also motor changes, dec DTRs", "Variable pain, crawling sensation in LE, invol contractions."],
+          ["S/Sx", "Dec pulses, trophic changes in feet", "Normal pulses, +SLR, sciatica", "Normal pulses, +SLR, sciatica", "Sleep disturbance, paresthesias"],
+          ["Location", "Calf then move through LE, buttock to feet", "Low back, buttock, thighs, calves, feet", "Feet (and hands) in stocking glove pattern", "Feet, calves, legs"],
+          ["Aggravating Factors", "Exertion, stairs, uphill; pain consistent all positions", "Spinal extension, walking, downhill", "Uncontrolled glucose levels, alcoholism", "Caffeine, pregnancy, iron deficiency"],
+          ["Easing Factors", "Standing still, sitting down, resting 5 min", "Sitting/lying, forward bend, flexion exercises", "Pain meds, treat underlying cause", "Eliminate triggers, +iron, walk, mod exercise"],
+          ["Ages", "40-60+", "40-60+", "Varies, depending on underlying cause", "Variable"],
+          ["Cause", "Atherosclerosis", "HNP, neoplasm, osteophytes", "Depends on cause; DM, RA, SLE, AIDS, cancer", "Unknown (pharm side effect, ANS disorder)"]
+        ]
+      }
+    ]
+  },
+  {
+    id: "upper-extremity",
+    label: "Upper Extremity",
+    type: "group",
+    groups: [
+      {
+        title: "Screening: Upper Quarter/Extremity",
+        subtitle: "Shoulder Pain Referral Patterns — R Side",
+        columns: ["System Origin", "Right Shoulder Location"],
+        rows: [
+          ["Peptic ulcer", "Lateral border, R scapula"],
+          ["Myocardial ischemia", "R shoulder, down arm"],
+          ["Acute cholecystitis", "R shoulder, between scapula, upper trapezius"],
+          ["Hepatic: liver disease, cancer, cirrhosis", "R shoulder, subscapular region"],
+          ["Pulmonary: pleurisy, pneumothorax, Pancoast's tumor, pneumonia", "Ipsilateral shoulder, upper trapezius"],
+          ["Kidney", "Ipsilateral shoulder"],
+          ["Gynecologic: endometriosis, ectopic pregnancy", "Ipsilateral; possibly B shoulder depending on cyst locations"]
+        ]
+      },
+      {
+        title: "Screening: Upper Quarter/Extremity",
+        subtitle: "Shoulder Pain Referral Patterns — L Side",
+        columns: ["System Origin", "Left Shoulder Location"],
+        rows: [
+          ["Internal bleeding, ruptured spleen", "L shoulder—Kehr’s sign"],
+          ["Myocardial ischemia", "L shoulder, pectoral region"],
+          ["Thoracic aortic aneurysm", "L shoulder, between scapula"],
+          ["Pancreas", "L shoulder"],
+          ["Infectious mononucleosis (hepatomegaly, splenomegaly)", "L shoulder, upper trapezius"],
+          ["Pulmonary: pleurisy, pneumothorax, Pancoast's tumor, pneumonia", "Ipsilateral shoulder, upper trapezius"],
+          ["Kidney", "Ipsilateral shoulder"],
+          ["Gynecologic: endometriosis, ectopic pregnancy", "Ipsilateral; possibly B shoulder depending on cyst locations"]
+        ]
+      }
+    ]
+  }
+];
+
 const slideContent = document.getElementById("slide-content");
 const slideProgress = document.getElementById("slide-progress");
+const quickReferenceBtn = document.getElementById("quick-reference-btn");
+const referenceBackdrop = document.getElementById("reference-backdrop");
+const quickReferenceModal = document.getElementById("quick-reference-modal");
+const referenceTabs = document.getElementById("reference-tabs");
+const referencePanel = document.getElementById("reference-panel");
+const referenceCloseBtn = document.getElementById("reference-close-btn");
+
+const referenceState = {
+  activeTab: referenceSections[0].id,
+  open: false
+};
 
 function getCaseAttempt(caseId) {
   if (!slideState.caseAttempts[caseId]) {
@@ -175,6 +246,8 @@ function getCaseAttempt(caseId) {
 }
 
 function renderSlide() {
+  syncQuickReferenceButton();
+
   if (slideState.currentSlide === 0) {
     renderTitleSlide();
     return;
@@ -401,6 +474,106 @@ function renderCompletionSlide() {
   document.querySelector('[data-action="restart-activity"]').addEventListener("click", restartActivity);
 }
 
+function syncQuickReferenceButton() {
+  const showOnCaseScreen = slideState.currentSlide >= 2 && slideState.currentSlide <= 7;
+  quickReferenceBtn.hidden = !showOnCaseScreen;
+}
+
+function renderReferenceTabs() {
+  referenceTabs.innerHTML = referenceSections
+    .map((section) => `
+      <button
+        class="reference-tab"
+        id="tab-${section.id}"
+        type="button"
+        role="tab"
+        aria-selected="${referenceState.activeTab === section.id}"
+        aria-controls="panel-${section.id}"
+        data-reference-tab="${section.id}"
+      >
+        ${section.label}
+      </button>
+    `)
+    .join("");
+
+  referenceTabs.querySelectorAll("[data-reference-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      referenceState.activeTab = button.dataset.referenceTab;
+      renderReferenceTabs();
+      renderReferencePanel();
+    });
+  });
+}
+
+function renderReferencePanel() {
+  const activeSection = referenceSections.find((section) => section.id === referenceState.activeTab);
+
+  if (!activeSection) {
+    return;
+  }
+
+  if (activeSection.type === "group") {
+    referencePanel.innerHTML = `
+      <div id="panel-${activeSection.id}" role="tabpanel" aria-labelledby="tab-${activeSection.id}">
+        <div class="reference-group-stack">
+          ${activeSection.groups.map((group) => `
+            <section class="reference-group">
+              <h3 class="reference-group__title">${group.title}</h3>
+              <p class="reference-group__subtitle">${group.subtitle}</p>
+              <div class="reference-table-wrap">
+                <table class="reference-table">
+                  <thead>
+                    <tr>
+                      ${group.columns.map((column) => `<th scope="col">${column}</th>`).join("")}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${group.rows.map((row) => `
+                      <tr>
+                        ${row.map((cell, index) => index === 0
+                          ? `<th scope="row">${cell}</th>`
+                          : `<td>${cell}</td>`).join("")}
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          `).join("")}
+        </div>
+      </div>
+    `;
+    return;
+  }
+}
+
+function openReferenceModal() {
+  referenceState.open = true;
+  quickReferenceBtn.setAttribute("aria-expanded", "true");
+  document.body.classList.add("modal-open");
+  quickReferenceModal.hidden = false;
+  referenceBackdrop.hidden = false;
+  renderReferenceTabs();
+  renderReferencePanel();
+  referenceCloseBtn.focus();
+}
+
+function closeReferenceModal() {
+  if (!referenceState.open) {
+    return;
+  }
+
+  referenceState.open = false;
+  quickReferenceBtn.setAttribute("aria-expanded", "false");
+  quickReferenceModal.hidden = true;
+  referenceBackdrop.hidden = true;
+  document.body.classList.remove("modal-open");
+
+  if (!quickReferenceBtn.hidden) {
+    quickReferenceBtn.focus();
+  }
+}
+
 function bindNextSlide() {
   const nextButton = document.querySelector('[data-action="next-slide"]');
   if (!nextButton) {
@@ -444,6 +617,24 @@ document.addEventListener("DOMContentLoaded", () => {
     window.scormHelper.setLessonStatus("incomplete");
     window.scormHelper.commit();
   }
+
+  quickReferenceBtn.addEventListener("click", openReferenceModal);
+  referenceCloseBtn.addEventListener("click", closeReferenceModal);
+  referenceBackdrop.addEventListener("click", closeReferenceModal);
+  quickReferenceModal.addEventListener("click", (event) => {
+    if (event.target === quickReferenceModal) {
+      closeReferenceModal();
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && referenceState.open) {
+      closeReferenceModal();
+    }
+  });
+
+  renderReferenceTabs();
+  renderReferencePanel();
+  closeReferenceModal();
 
   renderSlide();
 });

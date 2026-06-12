@@ -25,6 +25,33 @@
     </section>
   </main>
 
+  <button id="quick-reference-btn" class="quick-reference-btn" type="button" hidden aria-haspopup="dialog" aria-controls="quick-reference-modal" aria-expanded="false">
+    <span aria-hidden="true">📖</span>
+    <span>Quick Reference</span>
+  </button>
+
+  <div id="reference-backdrop" class="reference-backdrop" hidden></div>
+  <section
+    id="quick-reference-modal"
+    class="reference-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="reference-title"
+    hidden
+  >
+    <div class="reference-modal__inner">
+      <div class="reference-modal__header">
+        <div>
+          <p class="section-heading__kicker">Study Aid</p>
+          <h2 id="reference-title">Quick Reference</h2>
+        </div>
+        <button id="reference-close-btn" class="button button--ghost" type="button">Close</button>
+      </div>
+      <div id="reference-tabs" class="reference-tabs" role="tablist" aria-label="Quick reference sections"></div>
+      <div id="reference-panel" class="reference-panel"></div>
+    </div>
+  </section>
+
   <script src="scorm.js"></script>
   <script src="script.js"></script>
 </body>
