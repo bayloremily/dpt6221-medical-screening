@@ -228,7 +228,8 @@ const referenceCloseBtn = document.getElementById("reference-close-btn");
 
 const referenceState = {
   activeTab: referenceSections[0].id,
-  open: false
+  open: false,
+  lastFocusedElement: null
 };
 
 function getCaseAttempt(caseId) {
@@ -367,7 +368,7 @@ function renderCaseSlide(caseData, caseIndex) {
             ? `<button class="button button--primary" type="button" data-action="next-slide">${caseIndex === caseSlides.length - 1 ? "Finish Activity" : "Next Case"}</button>`
             : `<button class="button button--primary" type="button" data-action="check-case" data-case-index="${caseIndex}">Check Response</button>`}
         </div>
-        <div id="case-feedback" class="feedback" ${hasFeedback ? `data-state="${attempt.feedbackIndex === caseData.answer ? "correct" : "incorrect"}"` : "hidden"}>
+        <div id="case-feedback" class="feedback" role="status" aria-live="polite" aria-atomic="true" ${hasFeedback ? `data-state="${attempt.feedbackIndex === caseData.answer ? "correct" : "incorrect"}"` : "hidden"}>
           ${hasFeedback ? caseData.feedback[attempt.feedbackIndex] : ""}
         </div>
       </section>
@@ -502,6 +503,7 @@ function renderReferenceTabs() {
       renderReferenceTabs();
       renderReferencePanel();
     });
+    button.addEventListener("keydown", handleReferenceTabKeydown);
   });
 }
 
@@ -522,6 +524,7 @@ function renderReferencePanel() {
               <p class="reference-group__subtitle">${group.subtitle}</p>
               <div class="reference-table-wrap">
                 <table class="reference-table">
+                  <caption class="sr-only">${group.title} ${group.subtitle}</caption>
                   <thead>
                     <tr>
                       ${group.columns.map((column) => `<th scope="col">${column}</th>`).join("")}
@@ -549,6 +552,7 @@ function renderReferencePanel() {
 
 function openReferenceModal() {
   referenceState.open = true;
+  referenceState.lastFocusedElement = document.activeElement;
   quickReferenceBtn.setAttribute("aria-expanded", "true");
   document.body.classList.add("modal-open");
   quickReferenceModal.hidden = false;
@@ -569,8 +573,73 @@ function closeReferenceModal() {
   referenceBackdrop.hidden = true;
   document.body.classList.remove("modal-open");
 
-  if (!quickReferenceBtn.hidden) {
+  if (referenceState.lastFocusedElement && typeof referenceState.lastFocusedElement.focus === "function") {
+    referenceState.lastFocusedElement.focus();
+    referenceState.lastFocusedElement = null;
+  } else if (!quickReferenceBtn.hidden) {
     quickReferenceBtn.focus();
+  }
+}
+
+function handleReferenceTabKeydown(event) {
+  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+    return;
+  }
+
+  const tabs = Array.from(referenceTabs.querySelectorAll("[data-reference-tab]"));
+  const currentIndex = tabs.findIndex((tab) => tab === event.currentTarget);
+
+  if (currentIndex === -1) {
+    return;
+  }
+
+  event.preventDefault();
+
+  let nextIndex = currentIndex;
+  if (event.key === "ArrowRight") {
+    nextIndex = (currentIndex + 1) % tabs.length;
+  } else if (event.key === "ArrowLeft") {
+    nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+  } else if (event.key === "Home") {
+    nextIndex = 0;
+  } else if (event.key === "End") {
+    nextIndex = tabs.length - 1;
+  }
+
+  const nextTab = tabs[nextIndex];
+  if (nextTab) {
+    referenceState.activeTab = nextTab.dataset.referenceTab;
+    renderReferenceTabs();
+    renderReferencePanel();
+    const refreshedTab = document.getElementById(nextTab.id);
+    if (refreshedTab) {
+      refreshedTab.focus();
+    }
+  }
+}
+
+function trapReferenceFocus(event) {
+  if (!referenceState.open || event.key !== "Tab") {
+    return;
+  }
+
+  const focusableElements = quickReferenceModal.querySelectorAll(
+    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  );
+
+  if (!focusableElements.length) {
+    return;
+  }
+
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+
+  if (event.shiftKey && document.activeElement === firstElement) {
+    event.preventDefault();
+    lastElement.focus();
+  } else if (!event.shiftKey && document.activeElement === lastElement) {
+    event.preventDefault();
+    firstElement.focus();
   }
 }
 
@@ -630,6 +699,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (event.key === "Escape" && referenceState.open) {
       closeReferenceModal();
     }
+    trapReferenceFocus(event);
   });
 
   renderReferenceTabs();
